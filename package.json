@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "reconnecting-websocket": "^4.4.0",
+    "request": "^2.88.2",
+    "util": "^0.12.4",
+    "websocket": "^1.0.34",
+    "ws": "^8.4.0"
+  }
+}
