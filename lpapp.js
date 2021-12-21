@@ -26,38 +26,44 @@ const REQUEST_CONVERSATION_RESPONSE = 'cm.RequestConversationResponse';
     const wsurl = 'wss://va.msg.liveperson.net/ws_api/account/13350576/messaging/consumer?v=3';
     const wsoptions = {"headers":{"Authorization": jwt}};
     const ws = new WebSocket(wsurl, {}, wsoptions);
-    this.ws = ws;
 
+    // add event handlers
+    ws.on('open', onOpenHandler(jwt, ws));
+    ws.on('message', onMessageHandler(ws));
+    ws.on('close', onCloseHandler());
 
-    ws.on('open', function open() {
-        console.log('in ws open');
-        // looks like jwt has to be in this format for it to work
-        var obj = {"kind":"req","id":"0","type":"InitConnection","headers":[{"type":".ams.headers.ClientProperties","deviceFamily":"MOBILE","os":"ANDROID"},{"type":".ams.headers.ConsumerAuthentication","jwt":jwt}]};
+})();
 
-        var str = JSON.stringify(obj);
-        console.log(str);
-        ws.send(str, function(msg){
-            console.log('send call back');
-            console.log(msg);
-        });
-    });
-
-    ws.on('close', function close() {
-        console.log('disconnected');
-    });
-
-    ws.on('message', function message(data) {
+function onMessageHandler(ws) {
+    return (data) => {
         console.log(`server returned data : ${data}`);
         const obj = JSON.parse(data);
         console.log(obj.body);
-        if(obj.body === CONNECTED){
+        if (obj.body === CONNECTED) {
             requestNewConversation(ws);
-        } else if(obj.type === REQUEST_CONVERSATION_RESPONSE){
+        } else if (obj.type === REQUEST_CONVERSATION_RESPONSE) {
             sendFirstMessage(ws, obj.body.conversationId);
-        }        
-    });
+        }
+    };
+}
 
-})();
+function onCloseHandler() {
+    return () => {
+        console.log('disconnected');
+    };
+}
+
+function onOpenHandler(jwt, ws) {
+    return () => {
+        console.log('in ws open');
+        // looks like jwt has to be in this format for it to work
+        var obj = { "kind": "req", "id": "0", "type": "InitConnection", "headers": [{ "type": ".ams.headers.ClientProperties", "deviceFamily": "MOBILE", "os": "ANDROID" }, { "type": ".ams.headers.ConsumerAuthentication", "jwt": jwt }] };
+
+        var str = JSON.stringify(obj);
+        console.log(str);
+        ws.send(str);
+    };
+}
 
 // 3. request a new conversation
 function requestNewConversation(ws){
